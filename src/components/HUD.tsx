@@ -23,7 +23,7 @@ export default function HUD({ onTrigger }: Props) {
         <span className={styles.arrow}>→</span>
         <span className={styles.jutsu}>Kage Bunshin</span>
       </button>
-      <div className={styles.hint}>Tap a jutsu or use gesture + voice</div>
+      <div className={styles.hint}>Use gesture + voice for max power</div>
     </div>
   )
 }

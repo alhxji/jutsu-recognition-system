@@ -137,18 +137,22 @@ export function createVoiceListener(
   recognition.maxAlternatives = 3
 
   let running = false
+  let restartTimer: ReturnType<typeof setTimeout> | null = null
 
   recognition.onresult = (event: Event & { resultIndex: number; results: SpeechRecognitionResultList }) => {
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const result = event.results[i]
+      let matched = false
       for (let j = 0; j < result.length; j++) {
         const transcript = result[j].transcript.toLowerCase().trim()
-        if (transcript) onSpeechActivity?.(transcript)
+        if (transcript && !matched) {
+          onSpeechActivity?.(transcript)
+        }
         const match = matchJutsu(transcript)
-        if (match) {
+        if (match && !matched) {
+          matched = true
           const finalConf = match.confidence * (result[j].confidence ?? 0.8)
           onKeyword(match.jutsu, finalConf)
-          return
         }
       }
     }
@@ -156,12 +160,20 @@ export function createVoiceListener(
 
   recognition.onerror = (event: Event & { error: string }) => {
     if (event.error === 'no-speech' || event.error === 'aborted') return
+    // For other errors, try restarting
+    if (running) scheduleRestart()
+  }
+
+  function scheduleRestart() {
+    if (restartTimer) clearTimeout(restartTimer)
+    restartTimer = setTimeout(() => {
+      if (!running) return
+      try { recognition.start() } catch (_) { /* already running */ }
+    }, 300)
   }
 
   recognition.onend = () => {
-    if (running) {
-      try { recognition.start() } catch (_) { /* restarting */ }
-    }
+    if (running) scheduleRestart()
   }
 
   return {
@@ -171,6 +183,7 @@ export function createVoiceListener(
     },
     stop() {
       running = false
+      if (restartTimer) clearTimeout(restartTimer)
       try { recognition.stop() } catch (_) { /* already stopped */ }
     },
     supported: true,

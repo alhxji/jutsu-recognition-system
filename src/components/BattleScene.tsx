@@ -1,8 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { AttackEvent } from '../types'
 import styles from './BattleScene.module.css'
 
 type Phase = 'idle' | 'charge' | 'dash' | 'impact' | 'recover'
+
+/**
+ * 3 combo attack routes, Naruto-style:
+ *  uppercut  — rushes in low, kicks enemy upward
+ *  aerial    — jumps in from above, kicks mid-air
+ *  slam      — leaps high, crashes down on enemy
+ */
+const COMBO_ROUTES = ['uppercut', 'aerial', 'slam'] as const
+type ComboRoute = typeof COMBO_ROUTES[number]
+
+function shuffleRoutes(): ComboRoute[] {
+  const arr = [...COMBO_ROUTES] as ComboRoute[]
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
 
 interface Props {
   attack: AttackEvent | null
@@ -13,10 +31,15 @@ interface Props {
 export default function BattleScene({ attack, active, onComplete }: Props) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [lastAttack, setLastAttack] = useState<AttackEvent | null>(null)
+  const [cloneActive, setCloneActive] = useState(false)
+
+  // Randomise combo routes each time
+  const routes = useMemo(() => shuffleRoutes(), [attack])
 
   useEffect(() => {
     if (!active || !attack) {
       if (phase !== 'idle' && phase !== 'recover') setPhase('idle')
+      setCloneActive(false)
       return
     }
 
@@ -24,15 +47,21 @@ export default function BattleScene({ attack, active, onComplete }: Props) {
     setPhase('charge')
 
     const isClone = attack.jutsu === 'clone'
-    // Clone: longer charge to summon clones, then they all rush
-    const chargeTime = isClone ? 600 : 400
-    const dashTime = isClone ? 500 : 400
-    const impactTime = isClone ? 1400 : 1200
+    const chargeTime = isClone ? 500 : 400
+    const dashTime = isClone ? 200 : 400
+    const impactTime = isClone ? 1600 : 1200  // slightly longer for the gang-up feel
+
+    // Activate clones after a brief charge
+    if (isClone) {
+      const ct = setTimeout(() => setCloneActive(true), 300)
+      var cloneTimer = ct
+    }
 
     const t1 = setTimeout(() => setPhase('dash'), chargeTime)
     const t2 = setTimeout(() => setPhase('impact'), chargeTime + dashTime)
     const t3 = setTimeout(() => {
       setPhase('recover')
+      setCloneActive(false)
       setTimeout(() => {
         setPhase('idle')
         onComplete()
@@ -40,6 +69,7 @@ export default function BattleScene({ attack, active, onComplete }: Props) {
     }, chargeTime + dashTime + impactTime)
 
     return () => {
+      if (cloneTimer) clearTimeout(cloneTimer)
       clearTimeout(t1)
       clearTimeout(t2)
       clearTimeout(t3)
@@ -66,14 +96,14 @@ export default function BattleScene({ attack, active, onComplete }: Props) {
       </div>
       <div className={styles.scene}>
         <div className={styles.arena}>
-          {/* Main player */}
-          <div className={`${styles.player} ${styles[phase]}`}>
+          {/* Main player — stays back during clone combo */}
+          <div className={`${styles.player} ${isClone ? styles.idle : styles[phase]}`}>
             <div className={styles.playerBody}>
               <div className={styles.head} />
               <div className={styles.torso} />
-              <div className={`${styles.armFront} ${phase === 'dash' || phase === 'impact' ? styles.armExtended : ''}`} />
+              <div className={`${styles.armFront} ${!isClone && (phase === 'dash' || phase === 'impact') ? styles.armExtended : ''}`} />
               <div className={styles.armBack} />
-              <div className={`${styles.legFront} ${phase === 'dash' ? styles.legStride : ''}`} />
+              <div className={`${styles.legFront} ${!isClone && phase === 'dash' ? styles.legStride : ''}`} />
               <div className={styles.legBack} />
             </div>
             <div className={styles.playerLabel}>YOU</div>
@@ -92,42 +122,48 @@ export default function BattleScene({ attack, active, onComplete }: Props) {
                 )}
               </div>
             )}
-            {/* Clone jutsu: smoke puff during charge */}
             {isClone && phase === 'charge' && (
               <div className={styles.smokePuff} />
             )}
           </div>
 
-          {/* Shadow clones — appear during charge, dash + impact with player */}
-          {isClone && isAnimating && (
+          {/* Clone combo — 3 clones, all rush at once from different angles */}
+          {isClone && cloneActive && routes.map((route, i) => (
+            <div
+              key={`${route}-${i}`}
+              className={`${styles.comboClone} ${styles[`combo_${route}`]}`}
+            >
+              <div className={`${styles.cloneBody} ${styles[`dim${i}`]}`}>
+                <div className={styles.cloneHead} />
+                <div className={styles.cloneTorso} />
+                <div className={styles.cloneArm} />
+                <div className={styles.cloneLeg} />
+              </div>
+            </div>
+          ))}
+
+          {/* All clones hit at the same time */}
+          {isClone && phase === 'impact' && displayAttack && (
             <>
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className={`${styles.shadowClone} ${styles[phase]}`}
-                  style={{
-                    '--clone-offset': `${(i - 1) * 14}px`,
-                    '--clone-delay': `${i * 0.08}s`,
-                    animationDelay: `${i * 0.08}s`,
-                  } as React.CSSProperties}
-                >
-                  <div className={styles.cloneBody}>
-                    <div className={styles.cloneHead} />
-                    <div className={styles.cloneTorso} />
-                    <div className={`${styles.cloneArm} ${phase === 'dash' || phase === 'impact' ? styles.armExtended : ''}`} />
-                    <div className={`${styles.cloneLeg} ${phase === 'dash' ? styles.legStride : ''}`} />
-                  </div>
+              <div className={`${styles.comboHit} ${styles.clone}`}>
+                <div className={styles.impactRing} />
+                <div className={styles.impactRing2} />
+                <div className={styles.impactFlash} />
+              </div>
+              <div className={`${styles.comboDmg} ${styles.clone}`}>
+                <div className={styles.dmgNumber}>
+                  {displayAttack.effectiveness}%
                 </div>
-              ))}
+              </div>
             </>
           )}
 
-          {phase === 'impact' && displayAttack && (
+          {/* Normal jutsu impact */}
+          {!isClone && phase === 'impact' && displayAttack && (
             <div className={`${styles.impactZone} ${jutsuClass}`}>
               <div className={styles.impactRing} />
               <div className={styles.impactRing2} />
               <div className={styles.impactFlash} />
-              {isClone && <div className={styles.impactRing3} />}
               <div className={styles.dmgNumber}>
                 {displayAttack.effectiveness}%
               </div>

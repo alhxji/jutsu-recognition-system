@@ -48,7 +48,7 @@ export default function VoiceFeedback({ supported, active, lastTranscript, lastK
 
       {supported && active && !lastKeyword && (
         <div className={styles.tip}>
-          Say "Rasengan" or "Chidori" clearly
+          Say a jutsu name clearly
         </div>
       )}
     </div>

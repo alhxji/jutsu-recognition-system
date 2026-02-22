@@ -354,7 +354,7 @@
   text-shadow: 0 0 8px #ff8f00;
 }
 
-/* ── Shadow Clones ──────────────────────────────────── */
+/* ── Shadow Clone Combo (Naruto Rendan style) ─────── */
 
 .smokePuff {
   position: absolute;
@@ -369,39 +369,116 @@
   pointer-events: none;
 }
 
-.shadowClone {
+/*
+  Each clone runs a FULL keyframe animation for its route.
+  They start clustered at the player, then each takes a
+  completely different path to hit the enemy in sequence.
+  animation-delay staggers them ~0.55s apart = combo hits.
+*/
+
+.comboClone {
   position: absolute;
-  bottom: 28px;
-  left: 36px;
-  z-index: 2;
+  z-index: 3;
+  animation-fill-mode: both;
+  animation-timing-function: ease-in-out;
+}
+
+/* ── UPPERCUT: dashes low across ground → punches up ── */
+.combo_uppercut {
+  animation: comboUppercut 1.0s ease-in-out both;
+}
+
+@keyframes comboUppercut {
+  0%   { left: 36px;  bottom: 28px; opacity: 0; transform: scale(0.3); }
+  10%  { left: 36px;  bottom: 28px; opacity: 1; transform: scale(1); }
+  20%  { left: 60px;  bottom: 22px; transform: scaleX(1.15) scaleY(0.9); }
+  55%  { left: calc(100% - 100px); bottom: 20px; transform: scaleX(1) scaleY(1); }
+  70%  { left: calc(100% - 85px);  bottom: 30px; }
+  78%  { left: calc(100% - 82px);  bottom: 65px; transform: rotate(-15deg); }
+  88%  { left: calc(100% - 85px);  bottom: 50px; opacity: 0.8; }
+  100% { left: calc(100% - 85px);  bottom: 50px; opacity: 0; }
+}
+
+/* ── AERIAL: leaps up in an arc → flying kick from above ── */
+.combo_aerial {
+  animation: comboAerial 1.0s ease-in-out both;
+}
+
+@keyframes comboAerial {
+  0%   { left: 36px;  bottom: 28px; opacity: 0; transform: scale(0.3); }
+  10%  { left: 36px;  bottom: 28px; opacity: 1; transform: scale(1); }
+  25%  { left: 70px;  bottom: 90px; transform: rotate(-10deg); }
+  45%  { left: calc(50%); bottom: 110px; transform: rotate(10deg); }
+  65%  { left: calc(100% - 95px); bottom: 80px; transform: rotate(25deg); }
+  78%  { left: calc(100% - 82px);  bottom: 38px; transform: rotate(0deg); opacity: 1; }
+  88%  { left: calc(100% - 82px);  bottom: 35px; opacity: 0.8; }
+  100% { left: calc(100% - 82px);  bottom: 35px; opacity: 0; }
+}
+
+/* ── SLAM: loops up and behind, crashes down from top ── */
+.combo_slam {
+  animation: comboSlam 1.0s ease-in-out both;
+}
+
+@keyframes comboSlam {
+  0%   { left: 36px;  bottom: 28px; opacity: 0; transform: scale(0.3) rotate(0deg); }
+  10%  { left: 36px;  bottom: 28px; opacity: 1; transform: scale(1) rotate(0deg); }
+  25%  { left: 70px;  bottom: 55px; transform: rotate(-30deg); }
+  42%  { left: calc(100% - 60px);  bottom: 100px; transform: rotate(60deg); }
+  55%  { left: calc(100% - 55px);  bottom: 120px; transform: rotate(180deg); }
+  70%  { left: calc(100% - 75px);  bottom: 100px; transform: rotate(270deg); }
+  78%  { left: calc(100% - 82px);  bottom: 38px; transform: rotate(360deg); opacity: 1; }
+  88%  { left: calc(100% - 82px);  bottom: 35px; opacity: 0.8; transform: scale(0.95); }
+  100% { left: calc(100% - 82px);  bottom: 35px; opacity: 0; transform: scale(0.8); }
+}
+
+/* ── Per-clone hit flash (staggered with same delay) ── */
+.comboHit {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  z-index: 4;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0;
-  transition: left 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-  animation: cloneFadeIn 0.3s ease-out forwards;
-  animation-delay: var(--clone-delay);
+  animation: comboHitFlash 0.4s ease-out both;
 }
 
-.shadowClone.charge {
-  left: 36px;
-  transform: translateY(var(--clone-offset));
+@keyframes comboHitFlash {
+  0%   { opacity: 0; transform: scale(0.3); }
+  40%  { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(1.8); }
 }
 
-.shadowClone.dash {
-  left: calc(100% - 120px);
-  transform: translateY(var(--clone-offset));
+.comboDmg {
+  position: absolute;
+  bottom: 50px;
+  right: 30px;
+  z-index: 6;
+  opacity: 0;
+  animation: comboDmgAppear 0.5s ease-out 0.9s both;
 }
 
-.shadowClone.impact {
-  left: calc(100% - 120px);
-  transform: translateY(var(--clone-offset));
+@keyframes comboDmgAppear {
+  0%   { opacity: 0; transform: scale(0) translateY(0); }
+  50%  { opacity: 1; transform: scale(1.3) translateY(-6px); }
+  100% { opacity: 1; transform: scale(1) translateY(-10px); }
 }
 
+/* ── Clone body (dimmer than original player) ── */
 .cloneBody {
   position: relative;
   width: 24px;
   height: 44px;
-  opacity: 0.65;
-  filter: drop-shadow(0 0 4px #ffb30060);
+  filter: drop-shadow(0 0 3px #ffb30020);
 }
+
+.dim0 { opacity: 0.5; }
+.dim1 { opacity: 0.38; }
+.dim2 { opacity: 0.28; }
 
 .cloneHead {
   position: absolute;
@@ -411,8 +488,8 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #bbaa77;
-  border: 1px solid #ffb30050;
+  background: #887766;
+  border: 1px solid #ffb30025;
 }
 
 .cloneTorso {
@@ -423,8 +500,8 @@
   width: 8px;
   height: 14px;
   border-radius: 2px;
-  background: #1565c0;
-  border: 1px solid #ffb30030;
+  background: #0d3d80;
+  border: 1px solid #ffb30015;
 }
 
 .cloneArm {
@@ -434,10 +511,9 @@
   width: 3px;
   height: 12px;
   border-radius: 2px;
-  background: #bbaa77;
+  background: #887766;
   transform-origin: top center;
-  transform: rotate(-15deg);
-  transition: transform 0.25s ease;
+  transform: rotate(-60deg);
 }
 
 .cloneLeg {
@@ -447,15 +523,8 @@
   width: 4px;
   height: 14px;
   border-radius: 2px;
-  background: #1a237e;
+  background: #0d1b4a;
   transform-origin: top center;
-  transition: transform 0.2s ease;
-}
-
-@keyframes cloneFadeIn {
-  0% { opacity: 0; transform: scale(0.3) translateY(var(--clone-offset)); }
-  60% { opacity: 0.8; transform: scale(1.1) translateY(var(--clone-offset)); }
-  100% { opacity: 1; transform: scale(1) translateY(var(--clone-offset)); }
 }
 
 @keyframes smokeBurst {
