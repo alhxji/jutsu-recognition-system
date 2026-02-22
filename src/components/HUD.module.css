@@ -1,0 +1,63 @@
+.hud {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.8rem 1.4rem;
+  background: #00000090;
+  border: 1px solid #ffffff10;
+  border-radius: 10px;
+  backdrop-filter: blur(8px);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.row:hover {
+  background: #ffffff08;
+  border-color: #ffffff15;
+}
+
+.row:active {
+  background: #ffffff12;
+  border-color: #ffffff25;
+}
+
+.gesture {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.arrow {
+  color: #555;
+  font-size: 0.8rem;
+}
+
+.jutsu {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #4fc3f7;
+}
+
+.hint {
+  font-size: 0.65rem;
+  color: #666;
+  letter-spacing: 0.08em;
+  margin-top: 0.2rem;
+}

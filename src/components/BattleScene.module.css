@@ -1,0 +1,504 @@
+.box {
+  position: absolute;
+  top: 1.2rem;
+  left: 1.2rem;
+  z-index: 30;
+  width: 320px;
+  background: #0a0a0af0;
+  border: 1px solid #ffffff12;
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+.boxHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.8rem;
+  border-bottom: 1px solid #ffffff08;
+}
+
+.boxTitle {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #666;
+}
+
+.lastHit {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.65rem;
+  color: #555;
+  letter-spacing: 0.05em;
+}
+
+.scene {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+}
+
+.arena {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.ground {
+  position: absolute;
+  bottom: 20px;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #ffffff15, transparent);
+}
+
+.idleHint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: #333;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+}
+
+.player {
+  position: absolute;
+  bottom: 28px;
+  left: 36px;
+  transition: left 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.player.charge { left: 36px; }
+.player.dash { left: calc(100% - 110px); }
+.player.impact { left: calc(100% - 110px); }
+.player.recover {
+  left: 36px;
+  transition: left 0.5s ease-in-out;
+}
+
+.playerBody {
+  position: relative;
+  width: 28px;
+  height: 50px;
+}
+
+.playerLabel, .targetLabel {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.4rem;
+  letter-spacing: 0.15em;
+  margin-top: 3px;
+  opacity: 0.5;
+}
+
+.playerLabel { color: #4fc3f7; }
+.targetLabel { color: #ef5350; }
+
+.head {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #ccc;
+  border: 1px solid #90caf9;
+  box-shadow: 0 0 4px #4fc3f730;
+}
+
+.torso {
+  position: absolute;
+  top: 13px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 16px;
+  border-radius: 2px;
+  background: #1565c0;
+  border: 1px solid #42a5f530;
+}
+
+.armFront, .armBack {
+  position: absolute;
+  top: 14px;
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: #ccc;
+  transform-origin: top center;
+  transition: transform 0.25s ease;
+}
+
+.armFront { right: 1px; transform: rotate(-15deg); }
+.armBack { left: 2px; transform: rotate(15deg); opacity: 0.5; }
+.armExtended { transform: rotate(-90deg) !important; }
+
+.legFront, .legBack {
+  position: absolute;
+  top: 29px;
+  width: 5px;
+  height: 16px;
+  border-radius: 2px;
+  background: #1a237e;
+  transform-origin: top center;
+  transition: transform 0.2s ease;
+}
+
+.legFront { right: 3px; }
+.legBack { left: 4px; opacity: 0.6; }
+.legStride { animation: stride 0.2s ease-in-out alternate infinite; }
+
+.chakra {
+  position: absolute;
+  top: 10px;
+  right: -20px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rasenganOrb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #b3e5fc, #4fc3f7 50%, #0288d1);
+  box-shadow: 0 0 10px #4fc3f7, 0 0 20px #0288d180;
+  animation: orbSpin 0.3s linear infinite, orbPulse 0.15s ease-in-out alternate infinite;
+}
+
+.chidoriSpark {
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+
+.sparkLine {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 1.5px;
+  background: linear-gradient(90deg, #fff, #90caf9, transparent);
+  transform-origin: 0 50%;
+  transform: rotate(calc(var(--i) * 72deg));
+  animation: sparkFlicker 0.1s ease-in-out infinite alternate;
+  box-shadow: 0 0 4px #42a5f5;
+}
+
+.target {
+  position: absolute;
+  bottom: 28px;
+  right: 24px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.15s ease;
+}
+
+.targetHit { animation: targetRecoil 0.4s ease-out; }
+
+.targetBody {
+  position: relative;
+  width: 28px;
+  height: 50px;
+}
+
+.targetHead {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #555;
+  border: 1px solid #ef535040;
+}
+
+.targetTorso {
+  position: absolute;
+  top: 13px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 16px;
+  border-radius: 2px;
+  background: #383838;
+  border: 1px solid #ef535030;
+}
+
+.targetArmL, .targetArmR {
+  position: absolute;
+  top: 14px;
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: #555;
+}
+
+.targetArmL { left: 0; transform: rotate(10deg); }
+.targetArmR { right: 0; transform: rotate(-10deg); }
+
+.targetLegL, .targetLegR {
+  position: absolute;
+  top: 29px;
+  width: 5px;
+  height: 16px;
+  border-radius: 2px;
+  background: #2a2a2a;
+}
+
+.targetLegL { left: 4px; }
+.targetLegR { right: 3px; }
+
+.impactZone {
+  position: absolute;
+  bottom: 40px;
+  right: 50px;
+  z-index: 4;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.impactRing, .impactRing2 {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid;
+  animation: ringExpand 0.5s ease-out forwards;
+}
+
+.impactRing { width: 24px; height: 24px; }
+.impactRing2 { width: 14px; height: 14px; animation-delay: 0.08s; }
+
+.rasengan .impactRing, .rasengan .impactRing2 {
+  border-color: #4fc3f7;
+  box-shadow: 0 0 12px #4fc3f780;
+}
+
+.chidori .impactRing, .chidori .impactRing2 {
+  border-color: #e0e0e0;
+  box-shadow: 0 0 12px #90caf980;
+}
+
+.clone .impactRing, .clone .impactRing2, .clone .impactRing3 {
+  border-color: #ffb300;
+  box-shadow: 0 0 12px #ffb30080;
+}
+
+.impactRing3 {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  animation: ringExpand 0.5s ease-out 0.15s forwards;
+}
+
+.impactFlash {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  animation: flashBurst 0.35s ease-out forwards;
+}
+
+.rasengan .impactFlash {
+  background: radial-gradient(circle, #4fc3f760, transparent 70%);
+}
+
+.chidori .impactFlash {
+  background: radial-gradient(circle, #e0e0e060, transparent 70%);
+}
+
+.clone .impactFlash {
+  background: radial-gradient(circle, #ffb30060, transparent 70%);
+}
+
+.dmgNumber {
+  position: relative;
+  z-index: 5;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  animation: dmgPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.rasengan .dmgNumber {
+  color: #4fc3f7;
+  text-shadow: 0 0 8px #0288d1;
+}
+
+.chidori .dmgNumber {
+  color: #e0e0e0;
+  text-shadow: 0 0 8px #42a5f5;
+}
+
+.clone .dmgNumber {
+  color: #ffb300;
+  text-shadow: 0 0 8px #ff8f00;
+}
+
+/* ── Shadow Clones ──────────────────────────────────── */
+
+.smokePuff {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff40, #ffffff10 60%, transparent);
+  animation: smokeBurst 0.5s ease-out forwards;
+  pointer-events: none;
+}
+
+.shadowClone {
+  position: absolute;
+  bottom: 28px;
+  left: 36px;
+  z-index: 2;
+  opacity: 0;
+  transition: left 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: cloneFadeIn 0.3s ease-out forwards;
+  animation-delay: var(--clone-delay);
+}
+
+.shadowClone.charge {
+  left: 36px;
+  transform: translateY(var(--clone-offset));
+}
+
+.shadowClone.dash {
+  left: calc(100% - 120px);
+  transform: translateY(var(--clone-offset));
+}
+
+.shadowClone.impact {
+  left: calc(100% - 120px);
+  transform: translateY(var(--clone-offset));
+}
+
+.cloneBody {
+  position: relative;
+  width: 24px;
+  height: 44px;
+  opacity: 0.65;
+  filter: drop-shadow(0 0 4px #ffb30060);
+}
+
+.cloneHead {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #bbaa77;
+  border: 1px solid #ffb30050;
+}
+
+.cloneTorso {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  background: #1565c0;
+  border: 1px solid #ffb30030;
+}
+
+.cloneArm {
+  position: absolute;
+  top: 12px;
+  right: 1px;
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: #bbaa77;
+  transform-origin: top center;
+  transform: rotate(-15deg);
+  transition: transform 0.25s ease;
+}
+
+.cloneLeg {
+  position: absolute;
+  top: 25px;
+  right: 4px;
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: #1a237e;
+  transform-origin: top center;
+  transition: transform 0.2s ease;
+}
+
+@keyframes cloneFadeIn {
+  0% { opacity: 0; transform: scale(0.3) translateY(var(--clone-offset)); }
+  60% { opacity: 0.8; transform: scale(1.1) translateY(var(--clone-offset)); }
+  100% { opacity: 1; transform: scale(1) translateY(var(--clone-offset)); }
+}
+
+@keyframes smokeBurst {
+  0% { transform: translateX(-50%) scale(0.3); opacity: 0.8; }
+  100% { transform: translateX(-50%) scale(2); opacity: 0; }
+}
+
+@keyframes stride {
+  from { transform: rotate(-20deg); }
+  to { transform: rotate(20deg); }
+}
+
+@keyframes orbSpin { to { transform: rotate(360deg); } }
+
+@keyframes orbPulse {
+  from { box-shadow: 0 0 10px #4fc3f7, 0 0 20px #0288d180; }
+  to { box-shadow: 0 0 16px #4fc3f7, 0 0 32px #0288d1; }
+}
+
+@keyframes sparkFlicker {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+
+@keyframes targetRecoil {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(12px) rotate(4deg); }
+  60% { transform: translateX(6px) rotate(-1deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+
+@keyframes ringExpand {
+  from { transform: scale(0.5); opacity: 1; }
+  to { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes flashBurst {
+  from { transform: scale(0.3); opacity: 1; }
+  to { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes dmgPop {
+  0% { transform: scale(0) translateY(0); opacity: 0; }
+  50% { transform: scale(1.3) translateY(-6px); opacity: 1; }
+  100% { transform: scale(1) translateY(-12px); opacity: 1; }
+}

@@ -1,0 +1,21 @@
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: 'Rajdhani', sans-serif;
+  color: #fff;
+}
+
+:root {
+  --rasengan-core: #4fc3f7;
+  --rasengan-glow: #0288d1;
+  --chidori-core: #e0e0e0;
+  --chidori-glow: #42a5f5;
+}

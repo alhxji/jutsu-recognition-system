@@ -1,0 +1,181 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: shake 0.4s ease-out;
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  animation: flashPulse 0.6s ease-out forwards;
+}
+
+.rasengan .flash {
+  background: radial-gradient(circle at center, #4fc3f740, transparent 70%);
+}
+
+.chidori .flash {
+  background: radial-gradient(circle at center, #e0e0e040, transparent 70%);
+}
+
+.clone .flash {
+  background: radial-gradient(circle at center, #ffb30040, transparent 70%);
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.orb {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rasenganBall {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #b3e5fc, #4fc3f7 40%, #0288d1 70%, #01579b);
+  box-shadow:
+    0 0 40px #4fc3f7,
+    0 0 80px #0288d1,
+    0 0 120px #4fc3f780,
+    inset 0 0 30px #b3e5fc80;
+  animation: rasenganSpin 0.8s linear infinite, rasenganPulse 0.3s ease-in-out alternate infinite, rasenganGrow 0.4s ease-out;
+}
+
+.chidoriBolt {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.lightning {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 3px;
+  background: linear-gradient(90deg, #fff, #90caf9, transparent);
+  transform-origin: 0 50%;
+  transform: rotate(var(--angle));
+  animation: bolt 0.15s ease-in-out infinite alternate;
+  animation-delay: var(--delay);
+  box-shadow: 0 0 8px #42a5f5, 0 0 20px #90caf9;
+}
+
+.label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  animation: labelIn 0.3s ease-out;
+}
+
+.rasengan .label {
+  color: #4fc3f7;
+  text-shadow: 0 0 20px #0288d1, 0 0 40px #4fc3f7;
+}
+
+.chidori .label {
+  color: #e0e0e0;
+  text-shadow: 0 0 20px #42a5f5, 0 0 40px #90caf9;
+}
+
+.clone .label {
+  color: #ffb300;
+  text-shadow: 0 0 20px #ff8f00, 0 0 40px #ffb30080;
+}
+
+.cloneEffect {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cloneShadow {
+  position: absolute;
+  width: 50px;
+  height: 70px;
+  border-radius: 6px 6px 4px 4px;
+  background: linear-gradient(180deg, #ffb30060, #ff8f0040 50%, transparent);
+  border: 1.5px solid #ffb30080;
+  box-shadow: 0 0 20px #ffb30050, 0 0 40px #ff8f0030;
+  animation: cloneAppear 0.5s ease-out forwards;
+  animation-delay: calc(var(--clone-i) * 0.12s);
+  opacity: 0;
+  transform: translateX(calc((var(--clone-i) - 1) * 60px));
+}
+
+.cloneShadow::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffb30060;
+  border: 1.5px solid #ffb30080;
+}
+
+@keyframes cloneAppear {
+  0% { opacity: 0; transform: translateX(0) scale(0.3); }
+  60% { opacity: 1; transform: translateX(calc((var(--clone-i) - 1) * 60px)) scale(1.1); }
+  100% { opacity: 1; transform: translateX(calc((var(--clone-i) - 1) * 60px)) scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translate(0); }
+  10% { transform: translate(-4px, 2px); }
+  30% { transform: translate(3px, -3px); }
+  50% { transform: translate(-2px, 4px); }
+  70% { transform: translate(4px, -2px); }
+  90% { transform: translate(-3px, 1px); }
+}
+
+@keyframes flashPulse {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes rasenganSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rasenganPulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+@keyframes rasenganGrow {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bolt {
+  from { opacity: 0.6; width: 80px; }
+  to { opacity: 1; width: 130px; }
+}
+
+@keyframes labelIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.8); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
