@@ -112,79 +112,162 @@ function matchJutsu(transcript: string): { jutsu: JutsuName; confidence: number 
   return null
 }
 
+export type VoiceStatus = 'off' | 'starting' | 'listening' | 'hearing' | 'error' | 'denied'
+
 interface VoiceListener {
   start: () => void
   stop: () => void
+  restart: () => void
   supported: boolean
 }
 
 type VoiceCallback = (keyword: JutsuName, confidence: number) => void
 type SpeechActivityCallback = (transcript: string) => void
+type StatusCallback = (status: VoiceStatus, detail?: string) => void
 
 export function createVoiceListener(
   onKeyword: VoiceCallback,
   onSpeechActivity?: SpeechActivityCallback,
+  onStatus?: StatusCallback,
 ): VoiceListener {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition
   if (!SR) {
-    return { start() {}, stop() {}, supported: false }
+    return { start() {}, stop() {}, restart() {}, supported: false }
   }
 
-  const recognition = new SR()
-  recognition.continuous = true
-  recognition.interimResults = true
-  recognition.lang = 'en-US'
-  recognition.maxAlternatives = 3
-
+  let recognition: InstanceType<typeof SR> | null = null
   let running = false
   let restartTimer: ReturnType<typeof setTimeout> | null = null
+  let hearingTimer: ReturnType<typeof setTimeout> | null = null
 
-  recognition.onresult = (event: Event & { resultIndex: number; results: SpeechRecognitionResultList }) => {
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const result = event.results[i]
-      let matched = false
-      for (let j = 0; j < result.length; j++) {
-        const transcript = result[j].transcript.toLowerCase().trim()
-        if (transcript && !matched) {
-          onSpeechActivity?.(transcript)
-        }
-        const match = matchJutsu(transcript)
-        if (match && !matched) {
-          matched = true
-          const finalConf = match.confidence * (result[j].confidence ?? 0.8)
-          onKeyword(match.jutsu, finalConf)
+  // ---------- Stable public status (decoupled from engine) ----------
+  let publicStatus: VoiceStatus = 'off'
+  let everConnected = false // true after first successful onaudiostart
+
+  /** Only emits when status actually changes → no flicker */
+  function setPublicStatus(next: VoiceStatus, detail?: string) {
+    if (next === publicStatus && !detail) return   // dedupe
+    publicStatus = next
+    onStatus?.(next, detail)
+  }
+
+  /** Mark "hearing" for at least 800ms, then fall back to "listening" */
+  function flashHearing() {
+    if (hearingTimer) clearTimeout(hearingTimer)
+    setPublicStatus('hearing')
+    hearingTimer = setTimeout(() => {
+      if (running && publicStatus === 'hearing') setPublicStatus('listening')
+    }, 800)
+  }
+  // -------------------------------------------------------------------
+
+  function createRecognition() {
+    const rec = new SR()
+    rec.continuous = true
+    rec.interimResults = true
+    rec.lang = 'en-US'
+    rec.maxAlternatives = 3
+
+    // Mic connected — transition to "listening" (only meaningful on first connect)
+    rec.onaudiostart = () => {
+      everConnected = true
+      setPublicStatus('listening')
+    }
+
+    // Ignore onspeechstart / onspeechend entirely — they fire on ambient noise
+    // "hearing" is driven solely by actual transcription results below.
+
+    rec.onresult = (event: Event & { resultIndex: number; results: SpeechRecognitionResultList }) => {
+      // We got real speech — flash the "hearing" indicator
+      flashHearing()
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i]
+        let matched = false
+        for (let j = 0; j < result.length; j++) {
+          const transcript = result[j].transcript.toLowerCase().trim()
+          if (transcript && !matched) {
+            onSpeechActivity?.(transcript)
+          }
+          const match = matchJutsu(transcript)
+          if (match && !matched) {
+            matched = true
+            const finalConf = match.confidence * (result[j].confidence ?? 0.8)
+            onKeyword(match.jutsu, finalConf)
+          }
         }
       }
     }
-  }
 
-  recognition.onerror = (event: Event & { error: string }) => {
-    if (event.error === 'no-speech' || event.error === 'aborted') return
-    // For other errors, try restarting
-    if (running) scheduleRestart()
+    rec.onerror = (event: Event & { error: string }) => {
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setPublicStatus('denied', 'Mic permission denied — allow mic access and reload')
+        running = false
+        return
+      }
+      // no-speech & aborted are routine — ignore them, onend handles restart
+      if (event.error === 'no-speech' || event.error === 'aborted') return
+      // Real error
+      if (event.error === 'network') {
+        setPublicStatus('error', 'Network error — check internet connection')
+      } else {
+        setPublicStatus('error', `Speech error: ${event.error}`)
+      }
+    }
+
+    rec.onend = () => {
+      if (running) scheduleRestart()
+    }
+
+    return rec
   }
 
   function scheduleRestart() {
     if (restartTimer) clearTimeout(restartTimer)
-    restartTimer = setTimeout(() => {
-      if (!running) return
-      try { recognition.start() } catch (_) { /* already running */ }
-    }, 300)
+    // If mic previously worked, restart quickly & silently (user stays on "listening")
+    // If never connected or had an error, use backoff & show "starting"
+    if (everConnected && publicStatus !== 'error') {
+      restartTimer = setTimeout(() => { if (running) doStart() }, 120)
+    } else {
+      setPublicStatus('starting')
+      restartTimer = setTimeout(() => { if (running) doStart() }, 500)
+    }
   }
 
-  recognition.onend = () => {
-    if (running) scheduleRestart()
+  function doStart() {
+    try {
+      recognition = createRecognition()
+      recognition.start()
+      // Don't emit status here — onaudiostart will emit "listening" when mic actually connects
+    } catch (_) {
+      setPublicStatus('error', 'Failed to start mic')
+      // retry once more after 1s
+      if (running) restartTimer = setTimeout(() => { if (running) doStart() }, 1000)
+    }
   }
 
   return {
     start() {
       running = true
-      try { recognition.start() } catch (_) { /* already started */ }
+      everConnected = false
+      setPublicStatus('starting')
+      doStart()
     },
     stop() {
       running = false
       if (restartTimer) clearTimeout(restartTimer)
-      try { recognition.stop() } catch (_) { /* already stopped */ }
+      if (hearingTimer) clearTimeout(hearingTimer)
+      try { recognition?.stop() } catch (_) { /* ok */ }
+      setPublicStatus('off')
+    },
+    restart() {
+      if (restartTimer) clearTimeout(restartTimer)
+      if (hearingTimer) clearTimeout(hearingTimer)
+      try { recognition?.stop() } catch (_) { /* ok */ }
+      everConnected = false
+      running = true
+      setPublicStatus('starting')
+      setTimeout(() => doStart(), 200)
     },
     supported: true,
   }

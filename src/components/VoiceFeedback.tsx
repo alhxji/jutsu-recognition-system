@@ -1,14 +1,35 @@
 import { useEffect, useState } from 'react'
+import type { VoiceStatus } from '../core/voiceRecognition'
 import styles from './VoiceFeedback.module.css'
 
 interface Props {
   supported: boolean
-  active: boolean
+  status: VoiceStatus
+  statusDetail?: string
   lastTranscript: string
   lastKeyword: string
+  onRetry?: () => void
 }
 
-export default function VoiceFeedback({ supported, active, lastTranscript, lastKeyword }: Props) {
+const STATUS_LABELS: Record<VoiceStatus, string> = {
+  off: 'MIC OFF',
+  starting: 'STARTING…',
+  listening: 'LISTENING',
+  hearing: 'HEARING YOU',
+  error: 'ERROR',
+  denied: 'MIC BLOCKED',
+}
+
+function dotClass(status: VoiceStatus, supported: boolean) {
+  if (!supported) return styles.unsupported
+  if (status === 'hearing') return styles.hearing
+  if (status === 'listening') return styles.active
+  if (status === 'starting') return styles.starting
+  if (status === 'error' || status === 'denied') return styles.error
+  return ''
+}
+
+export default function VoiceFeedback({ supported, status, statusDetail, lastTranscript, lastKeyword, onRetry }: Props) {
   const [flash, setFlash] = useState(false)
 
   useEffect(() => {
@@ -18,14 +39,21 @@ export default function VoiceFeedback({ supported, active, lastTranscript, lastK
     return () => clearTimeout(t)
   }, [lastKeyword])
 
+  const isError = status === 'error' || status === 'denied'
+  const showBars = status === 'listening' || status === 'hearing'
+
   return (
     <div className={styles.container}>
-      <div className={styles.micRow}>
-        <div className={`${styles.micDot} ${!supported ? styles.unsupported : active ? styles.active : ''}`} />
+      <div
+        className={`${styles.micRow} ${isError ? styles.micRowError : ''}`}
+        onClick={isError ? onRetry : undefined}
+        style={isError ? { cursor: 'pointer' } : undefined}
+      >
+        <div className={`${styles.micDot} ${dotClass(status, supported)}`} />
         <span className={styles.micLabel}>
-          {!supported ? 'VOICE NOT SUPPORTED' : active ? 'LISTENING' : 'MIC OFF'}
+          {!supported ? 'VOICE NOT SUPPORTED' : STATUS_LABELS[status]}
         </span>
-        {active && (
+        {showBars && (
           <div className={styles.bars}>
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className={styles.bar} style={{ '--d': `${i * 0.1}s` } as React.CSSProperties} />
@@ -33,6 +61,13 @@ export default function VoiceFeedback({ supported, active, lastTranscript, lastK
           </div>
         )}
       </div>
+
+      {statusDetail && (
+        <div className={`${styles.detail} ${isError ? styles.detailError : ''}`}>
+          {statusDetail}
+          {isError && ' — tap mic to retry'}
+        </div>
+      )}
 
       {lastTranscript && (
         <div className={styles.transcript}>
@@ -46,7 +81,7 @@ export default function VoiceFeedback({ supported, active, lastTranscript, lastK
         </div>
       )}
 
-      {supported && active && !lastKeyword && (
+      {supported && showBars && !lastKeyword && !statusDetail && (
         <div className={styles.tip}>
           Say a jutsu name clearly
         </div>

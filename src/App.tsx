@@ -7,6 +7,7 @@ import CameraWarnings from './components/CameraWarnings'
 import VoiceFeedback from './components/VoiceFeedback'
 import HUD from './components/HUD'
 import { createVoiceListener } from './core/voiceRecognition'
+import type { VoiceStatus } from './core/voiceRecognition'
 import { createAttackResolver } from './core/attackResolver'
 import type { GestureResult, AttackEvent, JutsuName } from './types'
 
@@ -14,7 +15,8 @@ const EFFECT_DURATION = 1800
 
 export default function App() {
   const [currentGesture, setCurrentGesture] = useState<string | null>(null)
-  const [voiceActive, setVoiceActive] = useState(false)
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('off')
+  const [voiceStatusDetail, setVoiceStatusDetail] = useState<string | undefined>()
   const [voiceSupported, setVoiceSupported] = useState(false)
   const [attack, setAttack] = useState<AttackEvent | null>(null)
   const [showEffect, setShowEffect] = useState(false)
@@ -26,6 +28,7 @@ export default function App() {
 
   const effectTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const transcriptTimer = useRef<ReturnType<typeof setTimeout>>(null)
+  const voiceRef = useRef<ReturnType<typeof createVoiceListener> | null>(null)
 
   const resolverRef = useRef(
     createAttackResolver((event: AttackEvent) => {
@@ -67,18 +70,25 @@ export default function App() {
         if (transcriptTimer.current) clearTimeout(transcriptTimer.current)
         transcriptTimer.current = setTimeout(() => setLastTranscript(''), 3000)
       },
+      (status: VoiceStatus, detail?: string) => {
+        setVoiceStatus(status)
+        setVoiceStatusDetail(detail)
+      },
     )
 
+    voiceRef.current = voice
     setVoiceSupported(voice.supported)
     if (voice.supported) {
       voice.start()
-      setVoiceActive(true)
     }
 
     return () => {
       voice.stop()
-      setVoiceActive(false)
     }
+  }, [])
+
+  const onVoiceRetry = useCallback(() => {
+    voiceRef.current?.restart()
   }, [])
 
   const onManualJutsu = useCallback((jutsu: JutsuName) => {
@@ -115,7 +125,7 @@ export default function App() {
       <StatsPanel
         attack={attack}
         currentGesture={currentGesture}
-        voiceActive={voiceActive}
+        voiceActive={voiceStatus === 'listening' || voiceStatus === 'hearing'}
       />
       <CameraWarnings
         brightness={brightness}
@@ -124,9 +134,11 @@ export default function App() {
       />
       <VoiceFeedback
         supported={voiceSupported}
-        active={voiceActive}
+        status={voiceStatus}
+        statusDetail={voiceStatusDetail}
         lastTranscript={lastTranscript}
         lastKeyword={lastKeyword}
+        onRetry={onVoiceRetry}
       />
       <HUD onTrigger={onManualJutsu} />
     </>
